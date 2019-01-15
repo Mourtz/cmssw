@@ -159,18 +159,21 @@ FWHGTowerProxyBuilderBase::fillTowerForDetId( unsigned int rawid, float val )
    }
      
    const float* corners = geom->getCorners( rawid );
-   if( ! corners )
+   const float *parameters = item()->getGeom()->getParameters(rawid);
+   if(corners == nullptr || parameters == nullptr)
    {
       fwLog( fwlog::kInfo ) << "FWHGTowerProxyBuilderBase cannot get corners for DetId: "<< rawid << ". Ignored.\n";
       return -1;
    }
    
-   std::vector<TEveVector> front( 4 );
-   float eta[4], phi[4];
+   const int total_points = parameters[0];
+
+   std::vector<TEveVector> front( total_points );
+   float eta[total_points], phi[total_points];
    bool plusSignPhi  = false;
    bool minusSignPhi = false;
    int j = 0;
-   for( int i = 0; i < 4; ++i )
+   for( int i = 0; i < total_points; ++i )
    {	 
      front[i] = TEveVector( corners[j], corners[j + 1], corners[j + 2] );
      j += 3;
@@ -187,7 +190,7 @@ FWHGTowerProxyBuilderBase::fillTowerForDetId( unsigned int rawid, float val )
    // check for cell around phi and move up edge to negative side
    if( plusSignPhi && minusSignPhi ) 
    {
-      for( int i = 0; i < 4; ++i )
+      for( int i = 0; i < total_points; ++i )
       {
          if( phi[i] >= upPhiLimit ) 
          {
@@ -201,7 +204,7 @@ FWHGTowerProxyBuilderBase::fillTowerForDetId( unsigned int rawid, float val )
    float etam =  10;
    float phiM = -4;
    float phim =  4;
-   for( int i = 0; i < 4; ++i )
+   for( int i = 0; i < total_points; ++i )
    { 
       etam = Min( etam, eta[i] );
       etaM = Max( etaM, eta[i] );
@@ -240,6 +243,4 @@ FWHGTowerProxyBuilderBase::fillTowerForDetId( unsigned int rawid, float val )
    return tower; 
 }
 
-REGISTER_FWPROXYBUILDER(FWHGTowerProxyBuilderBase, HGCRecHitCollection, "HGCalLego", FWViewType::kLegoHFBit |FWViewType::kAllRPZBits | FWViewType::k3DBit );
-
-
+REGISTER_FWPROXYBUILDER(FWHGTowerProxyBuilderBase, HGCRecHitCollection, "HGCalLego", FWViewType::kLegoHFBit);
