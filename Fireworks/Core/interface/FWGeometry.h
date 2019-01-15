@@ -20,6 +20,7 @@ class TObjArray;
 
 #include "TEveVSDStructs.h"
 #include "TGeoMatrix.h"
+#include "TEveBoxSet.h"
 #include "TGeoXtru.h"
 
 #include "Fireworks/Core/interface/FWRecoGeom.h"
@@ -74,7 +75,10 @@ public:
    TEveGeoShape* getEveShape( unsigned int id  ) const;
    TEveGeoShape* getHGCSiliconEveShape( unsigned int id  ) const;
    TEveGeoShape* getHGCScintillatorEveShape( unsigned int id  ) const;
-  
+
+   //
+   void getHGCalRecHits(unsigned int id, TEveBoxSet *silicon, TEveBoxSet *scintillator, bool &h_hex, bool &h_box) const;
+
    // get shape description parameters
    const float* getShapePars( unsigned int id  ) const;
 

@@ -426,6 +426,59 @@ FWGeometry::getHGCScintillatorEveShape( unsigned int id  ) const
    return shape;
 }
 
+void FWGeometry::getHGCalRecHits(
+    unsigned int id,
+    TEveBoxSet *silicon /*hex*/, TEveBoxSet *scintillator /*box*/,
+    bool &h_hex, bool &h_box) const
+{
+   IdToInfoItr it = FWGeometry::find(id);
+   if (it == m_idToInfo.end())
+   {
+      fwLog(fwlog::kWarning) << "no reco geometry found for id " << id << std::endl;
+      return;
+   }
+
+   GeomDetInfo info = *it;
+
+   const int total_points = info.parameters[0];
+   const int total_vertices = 3 * total_points;
+
+   const bool isScintillator = (total_points == 4);
+   h_box |= isScintillator;
+   h_hex |= !isScintillator;
+
+   // Scintillator
+   if (isScintillator)
+   {
+      std::vector<float> pnts(24);
+      for (int i = 0; i < total_points; ++i)
+      {
+         // front face
+         pnts[i * 3 + 0] = info.points[i * 3];
+         pnts[i * 3 + 1] = info.points[i * 3 + 1];
+         pnts[i * 3 + 2] = info.points[i * 3 + 2];
+
+         // back face
+         pnts[(i * 3 + 0) + total_vertices] = info.points[i * 3];
+         pnts[(i * 3 + 1) + total_vertices] = info.points[i * 3 + 1];
+         pnts[(i * 3 + 2) + total_vertices] = info.points[i * 3 + 2] + info.shape[3];
+      }
+      scintillator->AddBox(&pnts[0]);
+   }
+   // Silicon
+   else
+   {
+      // opposite corner (3corners * 3verts each)
+      const int offset = 9;
+
+      float centerX = (info.points[6] + info.points[6 + offset]) / 2;
+      float centerY = (info.points[7] + info.points[7 + offset]) / 2;
+      float radius = fabs(info.points[6] - info.points[6 + offset]) / 2;
+      silicon->AddHex(TEveVector(centerX, centerY, info.points[2]),
+                      radius, 90.0, info.shape[3]);
+   }
+}
+
 const float*
 FWGeometry::getCorners( unsigned int id ) const
 {

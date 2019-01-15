@@ -25,64 +25,59 @@ void
 FWCaloClusterProxyBuilder::build( const reco::CaloCluster& iData, unsigned int iIndex, TEveElement& oItemHolder, const FWViewContext* ) 
 {
    std::vector<std::pair<DetId, float> > clusterDetIds = iData.hitsAndFractions();
-   
-   TEveBoxSet* boxset = new TEveBoxSet();
-   boxset->Reset(TEveBoxSet::kBT_FreeBox, true, 64);
+
+   bool h_hex(false);
+   TEveBoxSet *hex_boxset = new TEveBoxSet();
+   hex_boxset->UseSingleColor();
+   hex_boxset->SetPickable(true);
+   hex_boxset->Reset(TEveBoxSet::kBT_Hex, true, 64);
+   hex_boxset->SetAntiFlick(true);
+
+   bool h_box(false);
+   TEveBoxSet *boxset = new TEveBoxSet();
    boxset->UseSingleColor();
    boxset->SetPickable(true);
+   boxset->Reset(TEveBoxSet::kBT_FreeBox, true, 64);
+   boxset->SetAntiFlick(true);
 
    for( std::vector<std::pair<DetId, float> >::iterator it = clusterDetIds.begin(), itEnd = clusterDetIds.end();
         it != itEnd; ++it )
    {
-      const float* corners = item()->getGeom()->getCorners( it->first );
-
-      if( corners == nullptr ) {
-         continue;
-      }
-
-      std::vector<float> pnts(24);
-
       const uint type = ((it->first >> 28) & 0xF);
       // HGCal
-      if(type >= 8 && type <= 10){
+      if (type >= 8 && type <= 10)
+      {
+         item()->getGeom()->getHGCalRecHits(it->first, hex_boxset, boxset, h_hex, h_box);
+      }
+      // Not HGCal
+      else
+      {
+         const float* corners = item()->getGeom()->getCorners( it->first );
 
-         const float* parameters = item()->getGeom()->getParameters( it->first );
-         const float* shapes = item()->getGeom()->getShapePars(it->first);
-
-         if(parameters == nullptr || shapes == nullptr ){
+         if( corners == nullptr ) {
             continue;
          }
 
-         #if 0
-               const int total_points = parameters[0];
-               const int total_vertices = 3*total_points;
-         #else // using broken boxes(half hexagon) until there's support for hexagons in TEveBoxSet
-               const int total_points = 4;
-               const int total_vertices = 3*total_points;
+         h_box = true;
 
-               const float thickness = shapes[3];
-
-               for(int i = 0; i < total_points; ++i){
-                  pnts[i*3+0] = corners[i*3];
-                  pnts[i*3+1] = corners[i*3+1];
-                  pnts[i*3+2] = corners[i*3+2];
-
-                  pnts[(i*3+0)+total_vertices] = corners[i*3];
-                  pnts[(i*3+1)+total_vertices] = corners[i*3+1];
-                  pnts[(i*3+2)+total_vertices] = corners[i*3+2]+thickness;
-               }
-         #endif
-      } 
-      // Not HGCal
-      else {
+         std::vector<float> pnts(24);
          fireworks::energyTower3DCorners(corners, (*it).second, pnts);
+         boxset->AddBox( &pnts[0]);
       }
 
-      boxset->AddBox( &pnts[0]);
    }
 
-   boxset->RefitPlex();
-   setupAddElement(boxset, &oItemHolder);
+   if (h_hex)
+   {
+      hex_boxset->RefitPlex();
+      setupAddElement(hex_boxset, &oItemHolder);
+   }
+
+   if (h_box)
+   {
+      boxset->RefitPlex();
+      setupAddElement(boxset, &oItemHolder);
+   }
 }
 
 REGISTER_FWPROXYBUILDER( FWCaloClusterProxyBuilder, reco::CaloCluster, "Calo Cluster", FWViewType::kISpyBit );
