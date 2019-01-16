@@ -40,6 +40,10 @@ FWCaloClusterProxyBuilder::setItem(const FWEventItem *iItem)
 void
 FWCaloClusterProxyBuilder::build( const reco::CaloCluster& iData, unsigned int iIndex, TEveElement& oItemHolder, const FWViewContext* ) 
 {
+   const long layer = item()->getConfig()->value<long>("Layer");
+   const bool z_plus = item()->getConfig()->value<bool>("Z+");
+   const bool z_minus = item()->getConfig()->value<bool>("Z-");
+   
    std::vector<std::pair<DetId, float> > clusterDetIds = iData.hitsAndFractions();
 
    bool h_hex(false);
@@ -63,10 +67,6 @@ FWCaloClusterProxyBuilder::build( const reco::CaloCluster& iData, unsigned int i
       // HGCal
       if (type >= 8 && type <= 10)
       {
-         const long layer = item()->getConfig()->value<long>("Layer");
-         const bool z_plus = item()->getConfig()->value<bool>("Z+");
-         const bool z_minus = item()->getConfig()->value<bool>("Z-");
-
          const bool z = (it->first >> 25) & 0x1;
 
          // discard everything thats not at the side that we are intersted in

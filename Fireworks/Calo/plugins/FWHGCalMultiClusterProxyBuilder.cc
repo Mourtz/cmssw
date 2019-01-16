@@ -5,6 +5,8 @@
 #include "Fireworks/Core/interface/BuilderUtils.h"
 #include "DataFormats/ParticleFlowReco/interface/HGCalMultiCluster.h"
 
+#include "Fireworks/Core/interface/FWProxyBuilderConfiguration.h"
+
 class FWHGCalMultiClusterProxyBuilder : public FWSimpleProxyBuilderTemplate<reco::HGCalMultiCluster>
 {
 public:
@@ -17,13 +19,31 @@ private:
    FWHGCalMultiClusterProxyBuilder( const FWHGCalMultiClusterProxyBuilder& ) = delete; 			// stop default
    const FWHGCalMultiClusterProxyBuilder& operator=( const FWHGCalMultiClusterProxyBuilder& ) = delete; 	// stop default
 
+   void setItem(const FWEventItem *iItem) override;
+
    using FWSimpleProxyBuilderTemplate<reco::HGCalMultiCluster>::build;
    void build( const reco::HGCalMultiCluster& iData, unsigned int iIndex, TEveElement& oItemHolder, const FWViewContext* ) override;
 };
 
+void 
+FWHGCalMultiClusterProxyBuilder::setItem(const FWEventItem *iItem)
+{
+   FWProxyBuilderBase::setItem(iItem);
+   if (iItem)
+   {
+      iItem->getConfig()->assertParam("Layer", 1L, 0L, 52L);
+      iItem->getConfig()->assertParam("Z+", true);
+      iItem->getConfig()->assertParam("Z-", true);
+   }
+}
+
 void
 FWHGCalMultiClusterProxyBuilder::build(const reco::HGCalMultiCluster &iData, unsigned int iIndex, TEveElement &oItemHolder, const FWViewContext *)
 {
+   const long layer = item()->getConfig()->value<long>("Layer");
+   const bool z_plus = item()->getConfig()->value<bool>("Z+");
+   const bool z_minus = item()->getConfig()->value<bool>("Z-");
+
    const auto &clusters = iData.clusters();
 
    bool h_hex(false);
@@ -47,8 +67,83 @@ FWHGCalMultiClusterProxyBuilder::build(const reco::HGCalMultiCluster &iData, uns
       for (std::vector<std::pair<DetId, float>>::iterator it = clusterDetIds.begin(), itEnd = clusterDetIds.end();
            it != itEnd; ++it)
       {
+         const bool z = (it->first >> 25) & 0x1;
+
+         // discard everything thats not at the side that we are intersted in
+         if (
+             ((z_plus & z_minus) != 1) &&
+             (((z_plus | z_minus) == 0) || !(z == z_minus || z == !z_plus)))
+            continue;
+
          const float *corners = item()->getGeom()->getCorners(it->first);
-         item()->getGeom()->getHGCalRecHits(it->first, hex_boxset, boxset, h_hex, h_box);
+         const float *parameters = item()->getGeom()->getParameters(it->first);
+         const float *shapes = item()->getGeom()->getShapePars(it->first);
+
+         if (corners == nullptr || parameters == nullptr || shapes == nullptr)
+         {
+            continue;
+         }
+
+         const int total_points = parameters[0];
+         const bool isScintillator = (total_points == 4);
+         const uint8_t type = ((it->first >> 28) & 0xF);
+         
+         uint8_t ll = layer;
+         if (layer > 0)
+         {
+            if (layer > 28)
+            {
+               if (type == 8)
+               {
+                  continue;
+               }
+               ll -= 28;
+            }
+            else
+            {
+               if (type != 8)
+               {
+                  continue;
+               }
+            }
+
+            if (ll != ((it->first >> (isScintillator ? 17 : 20)) & 0x1F))
+               continue;
+         }
+
+         // Scintillator
+         if (isScintillator)
+         {
+            const int total_vertices = 3 * total_points;
+
+            std::vector<float> pnts(24);
+            for (int i = 0; i < total_points; ++i)
+            {
+               pnts[i * 3 + 0] = corners[i * 3];
+               pnts[i * 3 + 1] = corners[i * 3 + 1];
+               pnts[i * 3 + 2] = corners[i * 3 + 2];
+
+               pnts[(i * 3 + 0) + total_vertices] = corners[i * 3];
+               pnts[(i * 3 + 1) + total_vertices] = corners[i * 3 + 1];
+               pnts[(i * 3 + 2) + total_vertices] = corners[i * 3 + 2] + shapes[3];
+            }
+            boxset->AddBox(&pnts[0]);
+
+            h_box = true;
+         }
+         // Silicon
+         else
+         {
+            const int offset = 9;
+
+            float centerX = (corners[6] + corners[6 + offset]) / 2;
+            float centerY = (corners[7] + corners[7 + offset]) / 2;
+            float radius = fabs(corners[6] - corners[6 + offset]) / 2;
+            hex_boxset->AddHex(TEveVector(centerX, centerY, corners[2]),
+                               radius, 90.0, shapes[3]);
+
+            h_hex = true;
+         }
       }
    }
    
