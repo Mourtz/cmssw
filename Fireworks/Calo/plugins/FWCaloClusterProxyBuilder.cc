@@ -162,7 +162,7 @@ void FWCaloClusterProxyBuilder::build(const reco::CaloCluster &iData, unsigned i
             oItemHolder.AddElement(marker);
          }
 
-         float energy = item()->getConfig()->value<bool>("Cluster(0)/RecHit(1)") ? hitmap[it->first]->energy() : iData.energy();
+         const float energy = item()->getConfig()->value<bool>("Cluster(0)/RecHit(1)") ? hitmap[it->first]->energy() : iData.energy();
 
          // Scintillator
          if (isScintillator)
@@ -182,8 +182,12 @@ void FWCaloClusterProxyBuilder::build(const reco::CaloCluster &iData, unsigned i
             }
             boxset->AddBox(&pnts[0]);
             if(heatmap) {
-               const uint8_t colorFactor = gradient_steps*(fmin(energy/saturation_energy, 1.0f));   
-               boxset->DigitColor(gradient[0][colorFactor], gradient[1][colorFactor], gradient[2][colorFactor]);
+               if(energy){
+                  const uint8_t colorFactor = gradient_steps*(fmin(energy/saturation_energy, 1.0f));   
+                  boxset->DigitColor(gradient[0][colorFactor], gradient[1][colorFactor], gradient[2][colorFactor]);
+               } else {
+                  boxset->DigitColor(0.7f, 0.7f, 0.7f);
+               }
             }
 
             h_box = true;
@@ -199,8 +203,12 @@ void FWCaloClusterProxyBuilder::build(const reco::CaloCluster &iData, unsigned i
             hex_boxset->AddHex(TEveVector(centerX, centerY, corners[2]),
                                radius, 90.0, shapes[3]);
             if(heatmap) {
-               const uint8_t colorFactor = gradient_steps*(fmin(energy/saturation_energy, 1.0f));   
-               hex_boxset->DigitColor(gradient[0][colorFactor], gradient[1][colorFactor], gradient[2][colorFactor]);
+               if(energy){
+                  const uint8_t colorFactor = gradient_steps*(fmin(energy/saturation_energy, 1.0f));   
+                  hex_boxset->DigitColor(gradient[0][colorFactor], gradient[1][colorFactor], gradient[2][colorFactor]);
+               } else {
+                  hex_boxset->DigitColor(0.7f, 0.7f, 0.7f);
+               }
             }
 
             h_hex = true;
