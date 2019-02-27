@@ -19,8 +19,16 @@ class FWCaloClusterProxyBuilder : public FWHeatmapProxyBuilderTemplate<reco::Cal
    FWCaloClusterProxyBuilder(const FWCaloClusterProxyBuilder &) = delete;                  // stop default
    const FWCaloClusterProxyBuilder &operator=(const FWCaloClusterProxyBuilder &) = delete; // stop default
    
+   void setItem(const FWEventItem *iItem) override;
+
    void build(const reco::CaloCluster &iData, unsigned int iIndex, TEveElement &oItemHolder, const FWViewContext *) override;
 };
+
+void FWCaloClusterProxyBuilder::setItem(const FWEventItem *iItem){
+   FWHeatmapProxyBuilderTemplate::setItem(iItem);
+   if (iItem)
+      iItem->getConfig()->assertParam("Cluster(0)/RecHit(1)", false);
+}
 
 void FWCaloClusterProxyBuilder::build(const reco::CaloCluster &iData, unsigned int iIndex, TEveElement &oItemHolder, const FWViewContext *)
 {
@@ -154,6 +162,8 @@ void FWCaloClusterProxyBuilder::build(const reco::CaloCluster &iData, unsigned i
             oItemHolder.AddElement(marker);
          }
 
+         float energy = item()->getConfig()->value<bool>("Cluster(0)/RecHit(1)") ? hitmap[it->first]->energy() : iData.energy();
+
          // Scintillator
          if (isScintillator)
          {
@@ -172,7 +182,7 @@ void FWCaloClusterProxyBuilder::build(const reco::CaloCluster &iData, unsigned i
             }
             boxset->AddBox(&pnts[0]);
             if(heatmap) {
-               const uint8_t colorFactor = gradient_steps*(fmin(hitmap[it->first]->energy()/saturation_energy, 1.0f));   
+               const uint8_t colorFactor = gradient_steps*(fmin(energy/saturation_energy, 1.0f));   
                boxset->DigitColor(gradient[0][colorFactor], gradient[1][colorFactor], gradient[2][colorFactor]);
             }
 
@@ -189,7 +199,7 @@ void FWCaloClusterProxyBuilder::build(const reco::CaloCluster &iData, unsigned i
             hex_boxset->AddHex(TEveVector(centerX, centerY, corners[2]),
                                radius, 90.0, shapes[3]);
             if(heatmap) {
-               const uint8_t colorFactor = gradient_steps*(fmin(hitmap[it->first]->energy()/saturation_energy, 1.0f));   
+               const uint8_t colorFactor = gradient_steps*(fmin(energy/saturation_energy, 1.0f));   
                hex_boxset->DigitColor(gradient[0][colorFactor], gradient[1][colorFactor], gradient[2][colorFactor]);
             }
 
