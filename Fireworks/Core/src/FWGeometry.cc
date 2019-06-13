@@ -262,9 +262,9 @@ TEveGeoShape* FWGeometry::getHFNoseEveShape(unsigned int id) const {
   TEveGeoManagerHolder gmgr(TEveGeoShape::GetGeoMangeur());
   TEveGeoShape* shape = new TEveGeoShape(TString::Format("RecoGeom Id=%u", id));
 
-  float dz = fabs(info.points[14] - info.points[2]) * 0.5;
+  float dz = fabs(info.points[20] - info.points[2]) * 0.5;
 
-  info.translation[2] = (info.points[14] + info.points[2]) / 2.0f;
+  info.translation[2] = (info.points[20] + info.points[2]) / 2.0f;
   info.translation[0] = waferX * ((0 < info.translation[2]) - (info.translation[2] < 0));
   info.translation[1] = waferY;
 
@@ -420,9 +420,9 @@ TEveGeoShape* FWGeometry::getHGCSiliconEveShape(unsigned int id) const {
   TEveGeoManagerHolder gmgr(TEveGeoShape::GetGeoMangeur());
   TEveGeoShape* shape = new TEveGeoShape(TString::Format("RecoGeom Id=%u", id));
 
-  float dz = fabs(info.points[14] - info.points[2]) * 0.5;
+  float dz = fabs(info.points[20] - info.points[2]) * 0.5;
 
-  info.translation[2] = (info.points[14] + info.points[2]) / 2.0f;
+  info.translation[2] = (info.points[20] + info.points[2]) / 2.0f;
   info.translation[0] = waferX * ((0 < info.translation[2]) - (info.translation[2] < 0));
   info.translation[1] = waferY;
 
