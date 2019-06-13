@@ -468,7 +468,7 @@ void FW3DViewGeometry::showHFNose(bool showHFNose) {
   }
 
   if (m_HFNoseElements) {
-    m_HFNoseElements->SetRnrState(m_HFNoseElements);
+    m_HFNoseElements->SetRnrState(showHFNose);
     gEve->Redraw3D();
   }
 }
