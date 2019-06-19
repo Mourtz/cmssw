@@ -85,6 +85,7 @@ private:
   FWBoolParameter m_showHGCalEE;
   FWBoolParameter m_showHGCalHSi;
   FWBoolParameter m_showHGCalHSc;
+  FWBoolParameter m_showHFNose;
 
   TEveBoxSet* m_ecalBarrel;
   FWBoolParameter m_showEcalBarrel;

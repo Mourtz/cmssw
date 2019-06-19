@@ -53,7 +53,8 @@ FW3DViewGeometry::FW3DViewGeometry(const fireworks::Context& context)
       m_trackerEndcapElements(nullptr),
       m_HGCalEEElements(nullptr),
       m_HGCalHSiElements(nullptr),
-      m_HGCalHScElements(nullptr) {
+      m_HGCalHScElements(nullptr),
+      m_HFNoseElements(nullptr) {
   SetElementName("3D Geometry");
 }
 
@@ -447,6 +448,27 @@ void FW3DViewGeometry::showHGCalHSc(bool showHGCalHSc) {
   }
   if (m_HGCalHScElements) {
     m_HGCalHScElements->SetRnrState(showHGCalHSc);
+    gEve->Redraw3D();
+  }
+}
+
+void FW3DViewGeometry::showHFNose(bool showHFNose) {
+  if (showHFNose && !m_HFNoseElements) {
+    m_HFNoseElements = new TEveElementList("HFNose");
+
+    std::vector<uint8_t> wafers;
+    std::vector<unsigned int> ids = m_geom->getHFNoseWaferIds();
+    for (const auto& id : ids) {
+      TEveGeoShape* shape = m_geom->getHFNoseEveShape(id);
+      shape->SetTitle(Form("HFNose"));
+      addToCompound(shape, kFwHFNoseColorIndex);
+      m_HFNoseElements->AddElement(shape);
+    }
+    AddElement(m_HFNoseElements);
+  }
+
+  if (m_HFNoseElements) {
+    m_HFNoseElements->SetRnrState(showHFNose);
     gEve->Redraw3D();
   }
 }

@@ -200,6 +200,103 @@ std::vector<unsigned int> FWGeometry::getMatchedIds(Detector det, SubDetector su
   return ids;
 }
 
+/**
+ * select only one cell from each waffer in order to reconstruct the Geometry
+ * at wafer lever
+ **/ 
+std::vector<unsigned int> FWGeometry::getHFNoseWaferIds() const {
+  Detector det = Detector::Forward;
+  SubDetector subdet = SubDetector::TEC;
+
+  std::vector<unsigned int> ids;
+  const unsigned int mask = (det << 4) | (subdet);
+  for (IdToInfoItr it = m_idToInfo.begin(), itEnd = m_idToInfo.end(); it != itEnd; ++it) {
+    if (FWGeometry::match_id(*it, mask)){
+      bool flag(false);
+
+      for (const auto& id_it : ids) {
+        flag = (~0x3FF & (*it).id) == (~0x3FF & id_it);
+        if (flag)
+          break;
+      }
+
+      if (flag)
+        continue;
+
+      ids.push_back((*it).id);
+    }
+  }
+
+  return ids;
+}
+
+
+TEveGeoShape* FWGeometry::getHFNoseEveShape(unsigned int id) const {
+#if 0 
+   const unsigned int type = (id>>26)&0x3;
+   // select the middle cell of each waifer
+   id &= ~0x3FF;
+   id |= (type == 0) ? 0x16B : 0xE7;
+#else
+  float sideToSideWaferSize = 16.7441f;
+  float dx = sideToSideWaferSize / 2;
+  float sidey = dx / sqrt(3);
+  float dy = 2 * sidey;
+
+  int waferUint = (id >> 10) & 0x7;
+  int waferVint = (id >> 14) & 0x7;
+  float waferU = ((id >> 13) & 0x1) ? -sideToSideWaferSize * waferUint : sideToSideWaferSize * waferUint;
+  float waferV = ((id >> 17) & 0x1) ? -sideToSideWaferSize * waferVint : sideToSideWaferSize * waferVint;
+
+  float waferX = (-2 * waferU + waferV) / 2;
+  float waferY = waferV * sqrt(3) / 2;
+#endif
+  IdToInfoItr it = FWGeometry::find(id);
+  if (it == m_idToInfo.end()) {
+    fwLog(fwlog::kWarning) << "no reco geometry found for id " << id << std::endl;
+    return nullptr;
+  }
+
+  GeomDetInfo info = *it;
+
+  TEveGeoManagerHolder gmgr(TEveGeoShape::GetGeoMangeur());
+  TEveGeoShape* shape = new TEveGeoShape(TString::Format("RecoGeom Id=%u", id));
+
+  float dz = fabs(info.points[20] - info.points[2]) * 0.5;
+
+  info.translation[2] = (info.points[20] + info.points[2]) / 2.0f;
+  info.translation[0] = waferX * ((0 < info.translation[2]) - (info.translation[2] < 0));
+  info.translation[1] = waferY;
+
+  TGeoXtru* geoShape = new TGeoXtru(2);
+  Double_t x[6] = {-dx, -dx, 0.0, dx, dx, 0.0};
+  Double_t y[6] = {-sidey, sidey, dy, sidey, -sidey, -dy};
+  geoShape->DefinePolygon(6, x, y);
+  geoShape->DefineSection(0, -dz);
+  geoShape->DefineSection(1, dz);
+
+  shape->SetShape(geoShape);
+  double array[16] = {info.matrix[0],
+                      info.matrix[3],
+                      info.matrix[6],
+                      0.,
+                      info.matrix[1],
+                      info.matrix[4],
+                      info.matrix[7],
+                      0.,
+                      info.matrix[2],
+                      info.matrix[5],
+                      info.matrix[8],
+                      0.,
+                      info.translation[0],
+                      info.translation[1],
+                      info.translation[2],
+                      1.};
+  // Set transformation matrix from a column-major array
+  shape->SetTransMatrix(array);
+  return shape;
+}
+
 std::vector<unsigned int> FWGeometry::getMatchedIds(Detector det) const {
   std::vector<unsigned int> ids;
 
@@ -323,9 +420,9 @@ TEveGeoShape* FWGeometry::getHGCSiliconEveShape(unsigned int id) const {
   TEveGeoManagerHolder gmgr(TEveGeoShape::GetGeoMangeur());
   TEveGeoShape* shape = new TEveGeoShape(TString::Format("RecoGeom Id=%u", id));
 
-  float dz = fabs(info.points[14] - info.points[2]) * 0.5;
+  float dz = fabs(info.points[20] - info.points[2]) * 0.5;
 
-  info.translation[2] = (info.points[14] + info.points[2]) / 2.0f;
+  info.translation[2] = (info.points[20] + info.points[2]) / 2.0f;
   info.translation[0] = waferX * ((0 < info.translation[2]) - (info.translation[2] < 0));
   info.translation[1] = waferY;
 

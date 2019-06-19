@@ -35,6 +35,7 @@ public:
     Ecal = 3,
     Hcal = 4,
     Calo = 5,
+    Forward = 6,
     HGCalEE = 8,
     HGCalHSi = 9,
     HGCalHSc = 10,
@@ -94,6 +95,7 @@ public:
   TEveGeoShape* getEveShape(unsigned int id) const;
   TEveGeoShape* getHGCSiliconEveShape(unsigned int id) const;
   TEveGeoShape* getHGCScintillatorEveShape(unsigned int id) const;
+  TEveGeoShape* getHFNoseEveShape(unsigned int id) const;
 
   // get shape description parameters
   const float* getShapePars(unsigned int id) const;
@@ -101,6 +103,7 @@ public:
   // get all known detector ids with id matching mask
   std::vector<unsigned int> getMatchedIds(Detector det, SubDetector subdet) const;
   std::vector<unsigned int> getMatchedIds(Detector det) const;
+  std::vector<unsigned int> getHFNoseWaferIds() const;
 
   // get reco geometry
   const float* getCorners(unsigned int id) const;

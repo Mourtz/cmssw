@@ -109,6 +109,7 @@ FW3DViewBase::FW3DViewBase(TEveWindowSlot* iParent, FWViewType::EType typeId, un
       m_showHGCalEE(this, "Show HGCalEE", false),
       m_showHGCalHSi(this, "Show HGCalHSi", false),
       m_showHGCalHSc(this, "Show HGCalHSc", false),
+      m_showHFNose(this, "Show HFNose", false),
       m_ecalBarrel(nullptr),
       m_showEcalBarrel(this, "Show Ecal Barrel", false),
       m_rnrStyle(this, "Render Style", 0l, 0l, 2l),
@@ -179,6 +180,7 @@ void FW3DViewBase::setContext(const fireworks::Context& context) {
   m_showHGCalEE.changed_.connect(boost::bind(&FW3DViewGeometry::showHGCalEE, m_geometry, _1));
   m_showHGCalHSi.changed_.connect(boost::bind(&FW3DViewGeometry::showHGCalHSi, m_geometry, _1));
   m_showHGCalHSc.changed_.connect(boost::bind(&FW3DViewGeometry::showHGCalHSc, m_geometry, _1));
+  m_showHFNose.changed_.connect(boost::bind(&FW3DViewGeometry::showHFNose, m_geometry, _1));
   m_showMuonEndcap.changed_.connect(boost::bind(&FW3DViewGeometry::showMuonEndcap, m_geometry, _1));
   m_showEcalBarrel.changed_.connect(boost::bind(&FW3DViewBase::showEcalBarrel, this, _1));
 
@@ -478,6 +480,7 @@ void FW3DViewBase::populateController(ViewerParameterGUI& gui) const {
       .addParam(&m_showHGCalEE)
       .addParam(&m_showHGCalHSi)
       .addParam(&m_showHGCalHSc)
+      .addParam(&m_showHFNose)
       .addParam(&m_showPixelBarrel)
       .addParam(&m_showPixelEndcap)
       .addParam(&m_showEcalBarrel)
