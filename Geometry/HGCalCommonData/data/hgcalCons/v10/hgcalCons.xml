@@ -12,6 +12,11 @@
    <Vector name="ZRanges" type="numeric" nEntries="4">
      [hgcal:zHGCalEE1], [hgcal:zHGCalHEsil1], [hgcal:zHGCalHEmix1], 
      [hgcal:zHGCalHEmix5]</Vector>
+  <Vector name="LayerCenter" type="numeric" nEntries="50">
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0</Vector>
  </ConstantsSection>
 
 <SpecParSection label="hgcalCons.xml" eval="true">
@@ -132,7 +137,7 @@
     <Parameter name="NPhiBinBH"           value="360"/>
     <Parameter name="NPhiBinBH"           value="288"/>
     <Parameter name="LayerFrontBH"        value="[hgcal:FirstMixedLayer]"/>
-    <Parameter name="LayerFrontBH"        value="([hgcal:FirstMixedLayer]+4)"/>
+    <Parameter name="LayerFrontBH"        value="[hgcal:FirstMixedLayer]"/>
     <Parameter name="RMinLayerBH"         value="[hgcal:radMixL3]"/>
     <Parameter name="RMinLayerBH"         value="[hgcal:radMixL13]"/>
     <Parameter name="SlopeBottom"         value="0"/>

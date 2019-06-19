@@ -1,15 +1,21 @@
 import FWCore.ParameterSet.Config as cms
 import FWCore.Utilities.FileUtils as FileUtils
-from Configuration.StandardSequences.Eras import eras
 
-process = cms.Process('HGCGeomAnalysis',eras.Phase2C4)
+#from Configuration.Eras.Era_Phase2C4_cff import Phase2C4
+#process = cms.Process('PROD',Phase2C4)
+#process.load('Configuration.Geometry.GeometryExtended2023D28_cff')
+#process.load('Configuration.Geometry.GeometryExtended2023D28Reco_cff')
 
+from Configuration.Eras.Era_Phase2C4_timing_layer_bar_cff import Phase2C4_timing_layer_bar
+process = cms.Process('PROD',Phase2C4_timing_layer_bar)
+process.load('Configuration.Geometry.GeometryExtended2023D41_cff')
+process.load('Configuration.Geometry.GeometryExtended2023D41Reco_cff')
+
+process.load("SimGeneral.HepPDTESSource.pythiapdt_cfi")
+process.load('Configuration.StandardSequences.MagneticField_cff')
 process.load('Configuration.StandardSequences.Services_cff')
-process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')    
 process.load('FWCore.MessageService.MessageLogger_cfi')
 process.load('Configuration.EventContent.EventContent_cff')
-process.load('Configuration.Geometry.GeometryExtended2023D28Reco_cff')
-process.load('Configuration.StandardSequences.MagneticField_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
 from Configuration.AlCa.GlobalTag import GlobalTag
@@ -30,11 +36,11 @@ process.maxEvents = cms.untracked.PSet(
     input = cms.untracked.int32(-1)
 )
 
-process.load('Validation.HGCalValidation.rechitStudy_cff')
-process.hgcalRecHitStudyBH.Verbosity = 0
+process.load('Validation.HGCalValidation.hgcalRecHitStudy_cff')
+process.hgcalRecHitStudyBH.verbosity = 0
 
 process.TFileService = cms.Service("TFileService",
-                                   fileName = cms.string('rechitStudy.root'),
+                                   fileName = cms.string('hgcRecHitD41tt.root'),
                                    closeFileFast = cms.untracked.bool(True)
                                    )
 

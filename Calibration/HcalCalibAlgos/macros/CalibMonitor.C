@@ -798,6 +798,7 @@ void CalibMonitor::Loop() {
   std::vector<int> kounts(kp1,0);
   std::vector<int> kount50(20,0);
   for (Long64_t jentry=0; jentry<nentries;jentry++) {
+//for (Long64_t jentry=0; jentry<200;jentry++) {
     Long64_t ientry = LoadTree(jentry);
     if (ientry < 0) break;
     nb = fChain->GetEntry(jentry);   nbytes += nb;
@@ -920,9 +921,25 @@ void CalibMonitor::Loop() {
       }
     }
     bool goodTk = goodTrack(eHcal, cut, debug);
-    if (goodTk && p4060) ++kount50[7];
     bool selPhi = selectPhi(debug);
-    if (goodTk && selPhi && p4060) ++kount50[8];
+    if (p4060) {
+      if (t_qltyFlag) {
+	++kount50[7];
+	if (t_selectTk) {
+	  ++kount50[8];
+	  if (t_hmaxNearP < cut) {
+	    ++kount50[9];
+	    if (t_eMipDR < 1.0) {
+	      ++kount50[10];
+	      if (eHcal > 0.001) {
+		++kount50[11];
+		if (selPhi) ++kount50[12];
+	      }
+	    }
+	  }
+	}
+      }
+    }
     if (pmom > 0) rat =  (eHcal/(pmom-t_eMipDR));
     if (debug) {
       std::cout << "Entry " << jentry << " p|eHcal|ratio " << pmom << "|" 
@@ -935,7 +952,7 @@ void CalibMonitor::Loop() {
 		<< ":" << kd << ":" << kd1 << ":" << jp << std::endl;
     }
     if (goodTk && kp >=0 && selPhi) {
-      if (p4060) ++kount50[9];
+      if (p4060) ++kount50[13];
       if (t_eHcal < 0.01) {
 	std::map<int,counter>::const_iterator itr = runEn1.find(t_Run);
 	if (itr == runEn1.end()) {
@@ -951,7 +968,7 @@ void CalibMonitor::Loop() {
 	}
       }
       if (t_eMipDR < 0.01 && t_eHcal < 0.01) {
-	if (p4060) ++kount50[10];
+	if (p4060) ++kount50[14];
 	std::map<int,counter>::const_iterator itr = runEn2.find(t_Run);
 	if (itr == runEn2.end()) {
 	  counter knt;
@@ -966,7 +983,7 @@ void CalibMonitor::Loop() {
 	}
       }
       if (rat > rcut) {
-	if (p4060) ++kount50[11];
+	if (p4060) ++kount50[15];
 	if (plotType_ <= 1) {
 	  h_etaX[kp][kv]->Fill(eta,rat,t_EventWeight);
 	  h_etaX[kp][kv1]->Fill(eta,rat,t_EventWeight);
@@ -997,7 +1014,7 @@ void CalibMonitor::Loop() {
 	  }
 	}
 	if ((!dataMC_) || (t_mindR1 > 0.5) || (t_DataType == 1)) {
-	  if (p4060) ++kount50[12];
+	  if (p4060) ++kount50[16];
 	  ++kounts[kp];
 	  if (plotType_ <= 1) {
 	    if (jp > 0) h_etaF[kp][jp]->Fill(rat,t_EventWeight);
@@ -1032,8 +1049,8 @@ void CalibMonitor::Loop() {
 	      h_etaB[kp][jp1]->Fill(rat,t_EventWeight);
 	      h_etaB[kp][jp2]->Fill(rat,t_EventWeight);
 	    }
-	    if (p4060) ++kount50[13];
 	  }
+	  if (p4060) ++kount50[17];
 	}
       }
     }
@@ -1083,7 +1100,7 @@ void CalibMonitor::Loop() {
     if (ps_[k] > 21)  std::cout << ps_[k-1] <<":"<< ps_[k] << "     " 
 				<< kounts[k-1] << std::endl;
   std::cout << "Number in each step: ";
-  for (unsigned int k=0; k < 14; ++k) std::cout << " [" << k << "] " << kount50[k];
+  for (unsigned int k=0; k < 18; ++k) std::cout << " [" << k << "] " << kount50[k];
   std::cout <<std::endl;
 }
 
@@ -1100,9 +1117,11 @@ bool CalibMonitor::goodTrack(double& eHcal, double &cuti, bool debug) {
   }
   correctEnergy(eHcal);
   select = ((t_qltyFlag) && (t_selectTk) && (t_hmaxNearP < cut) &&
-	    (t_eMipDR < 1.0));
+	    (t_eMipDR < 1.0) && (eHcal > 0.001));
   if (debug) {
-    std::cout << " output " << eHcal << ":" << cut << ":" << select<< std::endl;
+    std::cout << " output " << select << " Based on " << t_qltyFlag << ":"
+	      << t_selectTk << ":"  << t_hmaxNearP << ":" << cut << ":"
+	      << t_eMipDR << ":" << eHcal << std::endl;
   }
   return select;
 }
@@ -1263,7 +1282,7 @@ void CalibMonitor::savePlot(const std::string& theName, bool append, bool all) {
 }
 
 void CalibMonitor::correctEnergy(double& eHcal) {
-
+  bool debug(false);
   double pmom = (useGen_ && (t_gentrackP>0)) ? t_gentrackP : t_p;
   if ((corrPU_ < 0) && (pmom > 0)) {
     double ediff = (t_eHcal30-t_eHcal10);
@@ -1286,7 +1305,13 @@ void CalibMonitor::correctEnergy(double& eHcal) {
       }
       ediff = (Etot3-Etot1);
     }
-    double fac = puFactor(-corrPU_,t_ieta,pmom,eHcal,ediff);
+    double fac = puFactor(-corrPU_,t_ieta,pmom,eHcal,ediff,false);
+    if (debug) {
+      double fac1 = puFactor(-corrPU_,t_ieta,pmom,eHcal,ediff,true);
+      double fac2 = puFactor(2,t_ieta,pmom,eHcal,ediff,true);
+      std::cout << "PU Factor for " << -corrPU_ << " = " << fac1 << "; for 2 = "
+		<< fac2 << std::endl;
+    }
     eHcal     *= fac;
   } else if (corrPU_ > 0) {
     eHcal      = puFactorRho(corrPU_,t_ieta,t_rhoh,eHcal);
@@ -2485,7 +2510,17 @@ void CalibPlotProperties::Loop() {
 
 	if (plotHists_) {
 	  h_nvtx->Fill(t_nVtx);
-	  if ((std::fabs(rat-1)<0.15) && (kp == kp50) &&
+	  bool               bad(false);
+	  for (unsigned int k=0; k<t_HitEnergies->size(); ++k) {
+	    unsigned int id = truncateId((*t_DetIds)[k],truncateFlag_,false);
+	    double cfac     = corrFactor_->getCorr(id);
+	    if (cFactor_ != 0) 
+	      cfac *= cFactor_->getCorr(t_Run,(*t_DetIds)[k]);
+	    double ener = cfac*(*t_HitEnergies)[k];
+	    if (corrPU_) correctEnergy(ener);
+	    if (ener < 0.001) bad = true;
+	  }
+	  if ((!bad) && (std::fabs(rat-1)<0.15) && (kp == kp50) &&
 	      ((std::abs(t_ieta) < 15) || (std::abs(t_ieta) > 17))) {
 	    float weight = (dataMC_ ? t_EventWeight : 
 			    t_EventWeight*puweight(t_nVtx));
@@ -2493,7 +2528,7 @@ void CalibPlotProperties::Loop() {
 	    sel += weight;
 	    std::vector<float> bv(7,0.0f), ev(7,0.0f);
 	    std::vector<int>   bnrec(7,0), enrec(7,0);
-	    double             eb(0), ee(0);	  
+	    double             eb(0), ee(0);
 	    for (unsigned int k=0; k<t_HitEnergies->size(); ++k) {
 	      unsigned int id = truncateId((*t_DetIds)[k],truncateFlag_,false);
 	      double cfac     = corrFactor_->getCorr(id);
@@ -2559,7 +2594,7 @@ bool CalibPlotProperties::goodTrack(double& eHcal, double &cuti, bool debug) {
   }
   correctEnergy(eHcal);
   select = ((t_qltyFlag) && (t_selectTk) && (t_hmaxNearP < cut) &&
-	    (t_eMipDR < 100.0));
+	    (t_eMipDR < 100.0) && (eHcal > 0.001));
   if (debug) {
     std::cout << " output " << eHcal << ":" << cut << ":" << select<< std::endl;
   }
