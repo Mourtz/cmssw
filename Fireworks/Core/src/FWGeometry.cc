@@ -238,15 +238,15 @@ TEveGeoShape* FWGeometry::getHFNoseEveShape(unsigned int id) const {
    id &= ~0x3FF;
    id |= (type == 0) ? 0x16B : 0xE7;
 #else
-  float sideToSideWaferSize = 16.7441f;
-  float dx = sideToSideWaferSize / 2;
-  float sidey = dx / sqrt(3);
-  float dy = 2 * sidey;
+  constexpr float sideToSideWaferSize = 16.7441f;
+  constexpr float dx = sideToSideWaferSize / 2;
+  constexpr float sidey = dx / sqrt(3);
+  constexpr float dy = 2 * sidey;
 
-  int waferUint = (id >> 10) & 0x7;
-  int waferVint = (id >> 14) & 0x7;
-  float waferU = ((id >> 13) & 0x1) ? -sideToSideWaferSize * waferUint : sideToSideWaferSize * waferUint;
-  float waferV = ((id >> 17) & 0x1) ? -sideToSideWaferSize * waferVint : sideToSideWaferSize * waferVint;
+  int waferUint = (id >> 10) & 0xF;
+  int waferVint = (id >> 15) & 0xF;
+  float waferU = ((id >> 14) & 0x1) ? -sideToSideWaferSize * waferUint : sideToSideWaferSize * waferUint;
+  float waferV = ((id >> 19) & 0x1) ? -sideToSideWaferSize * waferVint : sideToSideWaferSize * waferVint;
 
   float waferX = (-2 * waferU + waferV) / 2;
   float waferY = waferV * sqrt(3) / 2;
